@@ -10,3 +10,10 @@ Pretrained model checkpoints are gracefully provided by Tao Yu for [Segment Anyt
 
 For simplicity, you can also directly download a zip file of the `pretrained_models` directory from this [Google Drive](https://drive.google.com/drive/folders/1wpY-upCo4GIW4wVPnlMh_ym779lLIG2A?usp=sharing).
 
+## Usage
+To use the script you can call it with various options of which `input_img` is the only required parameter without default value. To get a window to click on an object to remove use the `coords_type` parameter with the value `click`.
+```
+    python main.py \
+        --input_img <image> \
+        --coords_type click
+```
