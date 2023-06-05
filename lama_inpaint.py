@@ -16,8 +16,8 @@ from saicinpainting.evaluation.data import pad_tensor_to_modulo
 
 
 @torch.no_grad()
-def inpaint_img_with_lama(img: np.ndarray, mask: np.ndarray, config_p: str, ckpt_p: str, mod: int = 8,
-                          device: torch.device = "cuda"):
+def inpaint_with_lama(img: np.ndarray, mask: np.ndarray, config_p: str, ckpt_p: str, mod: int = 8,
+                      device: torch.device = "cuda"):
     assert len(mask.shape) == 2
     if np.max(mask) == 1:
         mask = mask * 255
