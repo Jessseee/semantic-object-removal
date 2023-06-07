@@ -29,12 +29,11 @@ def setup_args(parser):
         help="Output path to the directory with results.",
     )
     parser.add_argument(
-        "--sam_model_type", type=str, default="vit_h",
-        choices=['vit_h', 'vit_l', 'vit_b'],
-        help="The type of sam model to load."
+        "--save_masks", type=bool, default=False,
+        help="Whether to save the masks to image files."
     )
     parser.add_argument(
-        "--lama_config", type=str, default="./configs/lama/prediction/default.yaml",
+        "--lama_config", type=str, default="./lama_config.yaml",
         help="The path to the config file of lama model.",
     )
     parser.add_argument(
@@ -47,6 +46,17 @@ def setup_args(parser):
     )
 
 
+def save_masked_image(img, mask, img_mask_p):
+    dpi = plt.rcParams['figure.dpi']
+    height, width = img.shape[:2]
+    plt.figure(figsize=(width / dpi / 0.77, height / dpi / 0.77))
+    plt.imshow(img)
+    show_mask(plt.gca(), mask, random_color=False)
+    plt.axis('off')
+    plt.savefig(img_mask_p, bbox_inches='tight', pad_inches=0)
+    plt.close()
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     setup_args(parser)
@@ -55,37 +65,31 @@ if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
     img = load_img_to_array(args.input_img)
 
-    masks = segment_with_maskformer(img, args.maskformer_ckpt, args.labels)
-    masks = masks.astype(np.uint8) * 255
+    masks, labels = segment_with_maskformer(img, args.maskformer_ckpt, args.labels)
 
     # dilate mask to avoid unmasked edge effect
     if args.dilate_kernel_size is not None:
         masks = [dilate_mask(mask, args.dilate_kernel_size) for mask in masks]
 
-    # visualize the segmentation results
     img_stem = Path(args.input_img).stem
-    out_dir = Path(args.output_dir) / img_stem
+    out_dir = Path(args.output_dir)
+    if args.save_masks: out_dir = out_dir / img_stem
     out_dir.mkdir(parents=True, exist_ok=True)
-    for idx, mask in enumerate(masks):
-        # path to the results
-        mask_p = out_dir / f"mask_{idx}.png"
-        img_mask_p = out_dir / f"with_{Path(mask_p).name}"
 
-        # save the mask
-        save_array_to_img(mask, mask_p)
+    # Loop over masks and do in-painting for each selected label
+    for mask, label in zip(masks, labels):
+        if args.save_masks:
+            # save the mask
+            mask_p = out_dir / f"mask_{label}.png"
+            save_array_to_img(mask, mask_p)
 
-        # save the masked image
-        dpi = plt.rcParams['figure.dpi']
-        height, width = img.shape[:2]
-        plt.figure(figsize=(width/dpi/0.77, height/dpi/0.77))
-        plt.imshow(img)
-        show_mask(plt.gca(), mask, random_color=False)
-        plt.savefig(img_mask_p, bbox_inches='tight', pad_inches=0)
-        plt.close()
+            # save the masked image
+            img_mask_p = out_dir / f"with_mask_{label}.png"
+            save_masked_image(img, mask, img_mask_p)
 
-        # Inpaint mask
-        mask_p = out_dir / f"mask_{idx}.png"
-        img_inpainted_p = out_dir / f"inpainted_with_{Path(mask_p).name}"
+        # Inpaint mask and save image
         img_inpainted = inpaint_with_lama(img, mask, args.lama_config, args.lama_ckpt, device=device)
-        save_array_to_img(img_inpainted, img_inpainted_p)
         img = img_inpainted
+
+    img_final_p = out_dir / f"{img_stem}.png"
+    save_array_to_img(img, img_final_p)
