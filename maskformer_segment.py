@@ -1,11 +1,12 @@
+import json
+
 from transformers import MaskFormerForInstanceSegmentation, MaskFormerImageProcessor
 from torch import index_select, tensor
 import numpy as np
 
-from utils import id_to_label
 
-
-def segment_with_maskformer(image, maskformer_ckpt, to_mask):
+def segment_with_maskformer(image, maskformer_ckpt, to_select, label_file):
+    labels = json.load(open(label_file, "r"))
     maskformer = MaskFormerForInstanceSegmentation.from_pretrained(maskformer_ckpt)
     processor = MaskFormerImageProcessor()
     inputs = processor(images=image, return_tensors="pt")
@@ -16,13 +17,13 @@ def segment_with_maskformer(image, maskformer_ckpt, to_mask):
         target_sizes=[image.shape[:2] for _ in range(batch_size)],
         return_binary_maps=True
     )[0]
-    index = []
-    labels = []
+    mask_selected = []
+    mask_labels = []
     for item in _outputs['segments_info']:
-        label = id_to_label(item['label_id'])
-        if label in to_mask:
+        label = labels[str(item['label_id'])]
+        if label in to_select:
             print(f"{label}: {item}")
-            index.append(item['id'])
-            labels.append(label)
-    masks = index_select(_outputs['segmentation'], 0, tensor(index)).numpy().astype(np.uint8) * 255
-    return masks, labels
+            mask_selected.append(item['id'])
+            mask_labels.append(label)
+    masks = index_select(_outputs['segmentation'], 0, tensor(mask_selected)).numpy().astype(np.uint8) * 255
+    return masks, mask_labels

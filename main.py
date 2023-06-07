@@ -44,6 +44,10 @@ def setup_args(parser):
         "--maskformer_ckpt", type=str, default="facebook/maskformer-swin-large-ade",
         help="The path to the maskformer checkpoint."
     )
+    parser.add_argument(
+        "--label_file", type=str, default="./labels.json",
+        help="The json file containing the output labels of the maskformer model"
+    )
 
 
 def save_masked_image(img, mask, img_mask_p):
@@ -65,7 +69,7 @@ if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
     img = load_img_to_array(args.input_img)
 
-    masks, labels = segment_with_maskformer(img, args.maskformer_ckpt, args.labels)
+    masks, labels = segment_with_maskformer(img, args.maskformer_ckpt, args.labels, args.label_file)
 
     # dilate mask to avoid unmasked edge effect
     if args.dilate_kernel_size is not None:

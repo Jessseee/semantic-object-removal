@@ -1,5 +1,3 @@
-import json
-
 import cv2
 import numpy as np
 from PIL import Image
@@ -47,9 +45,4 @@ def show_mask(ax, mask: np.ndarray, random_color=False):
     h, w = mask.shape[-2:]
     mask_img = mask.reshape(h, w, 1) * color.reshape(1, 1, -1)
     ax.imshow(mask_img)
-
-
-def id_to_label(id):
-    labels = json.load(open("labels.json", "r"))
-    return labels[str(id)]
 
