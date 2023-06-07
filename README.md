@@ -1,5 +1,5 @@
-# Dynamic Object Removal
-Segmentation and in-painting inspired by [Inpaint Anything](https://github.com/geekyutao/Inpaint-Anything) by  Tao Yu et al. Using [MaskFormer](https://github.com/facebookresearch/MaskFormer) for semantic segmentation to select areas to remove using [LaMa](https://github.com/advimman/lama) for in-painting.
+# Semantic Object Removal
+Using semantic segmentation and in-painting to remove objects based on labels. Inspired by [Inpaint Anything](https://github.com/geekyutao/Inpaint-Anything) by  Tao Yu et al. Using [MaskFormer](https://github.com/facebookresearch/MaskFormer) for semantic segmentation to select areas to remove using [LaMa](https://github.com/advimman/lama) for in-painting.
 
 ## Installation
 Install the Python requirements.
