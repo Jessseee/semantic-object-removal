@@ -29,5 +29,7 @@ class MaskFormer:
             if label in to_select:
                 mask_selected.append(item['id'])
                 mask_labels.append(label)
+        if len(mask_selected) == 0:
+            return None, None
         masks = index_select(outputs['segmentation'], 0, tensor(mask_selected)).numpy().astype(np.uint8) * 255
         return masks, mask_labels

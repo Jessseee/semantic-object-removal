@@ -73,28 +73,34 @@ def remove_objects_from_image(maskformer: MaskFormer, lama: LaMa, input_path: st
     if args.save_masks: out_dir = out_dir / img_stem
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # Save original image if no objects were found to remove
+    if masks is None and labels is None:
+        img_final_path = out_dir / f"{img_stem}.png"
+        save_array_to_img(image, img_final_path)
+        return
+
     # Dilate mask to avoid unmasked edge effect
-    if dilate_kernel_size is not None:
+    if dilate_kernel_size > 0:
         masks = [dilate_mask(mask, args.dilate_kernel_size) for mask in masks]
 
     # Loop over masks and do in-painting for each selected label
     for mask, label in zip(masks, labels):
         if args.save_masks:
             # Save the mask
-            mask_p = out_dir / f"mask_{label}.png"
-            save_array_to_img(mask, mask_p)
+            mask_path = out_dir / f"mask_{label}.png"
+            save_array_to_img(mask, mask_path)
 
             # Save the masked image
-            img_mask_p = out_dir / f"with_mask_{label}.png"
-            save_masked_image(image, mask, img_mask_p)
+            img_mask_path = out_dir / f"with_mask_{label}.png"
+            save_masked_image(image, mask, img_mask_path)
 
         # Inpaint mask and save image
         img_inpainted = lama.inpaint(image, mask)
         image = img_inpainted
 
     # Save final result
-    img_final_p = out_dir / f"{img_stem}.png"
-    save_array_to_img(image, img_final_p)
+    img_final_path = out_dir / f"{img_stem}.png"
+    save_array_to_img(image, img_final_path)
 
 
 if __name__ == "__main__":
