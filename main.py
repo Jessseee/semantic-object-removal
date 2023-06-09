@@ -8,6 +8,8 @@ from matplotlib import pyplot as plt
 import numpy as np
 from tqdm import tqdm
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 from maskformer import MaskFormer
 from lama import LaMa
 from utils import load_img_to_array, save_array_to_img, dilate_mask, show_mask
