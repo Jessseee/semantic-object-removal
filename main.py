@@ -117,7 +117,9 @@ if __name__ == "__main__":
     if not os.path.exists(args.input):
         raise IOError(f"{args.input} does not exist.")
     if os.path.isdir(args.input):
-        images = [entry.path for entry in os.scandir(args.input) if entry.is_file()]
+        processed = [os.path.splitext(file)[0] for file in os.listdir(args.output_dir)]
+        images = [entry.path for entry in os.scandir(args.input) if entry.is_file()
+                  and os.path.splitext(entry.name)[0] not in processed]
         if len(images) == 0:
             raise IOError(f"There are no files in {args.input}.")
         for image in tqdm(images):
