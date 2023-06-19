@@ -30,7 +30,7 @@ def setup_args(parser):
         help="Output path to the directory with results.",
     )
     parser.add_argument(
-        "--img_suffix", type=str, default="jpg",
+        "--img_suffix", type=str, default=".jpg",
         choices=[ext for ext, format in registered_extensions().items() if format in OPEN],
         help="The output image type suffix."
     )
