@@ -7,6 +7,7 @@ from pathlib import Path
 from matplotlib import pyplot as plt
 import numpy as np
 from tqdm import tqdm
+from PIL.Image import registered_extensions, OPEN
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -27,6 +28,11 @@ def setup_args(parser):
     parser.add_argument(
         "-o", "--output_dir", type=str, default="./results",
         help="Output path to the directory with results.",
+    )
+    parser.add_argument(
+        "--img_suffix", type=str, default="jpg",
+        choices=[ext for ext, format in registered_extensions().items() if format in OPEN],
+        help="The output image type suffix."
     )
     parser.add_argument(
         "--dilate_kernel_size", type=int, default=15,
@@ -66,7 +72,7 @@ def save_masked_image(image: np.ndarray, mask: np.ndarray, img_mask_path: str | 
 
 
 def remove_objects_from_image(maskformer: MaskFormer, lama: LaMa, input_path: str | os.PathLike,
-                              output_dir: str | os.PathLike, dilate_kernel_size: int):
+                              output_dir: str | os.PathLike, img_suffix: str, dilate_kernel_size: int):
     image = load_img_to_array(input_path)
     masks, labels = maskformer.segment(image, args.labels)
 
@@ -77,7 +83,7 @@ def remove_objects_from_image(maskformer: MaskFormer, lama: LaMa, input_path: st
 
     # Save original image if no objects were found to remove
     if masks is None and labels is None:
-        img_final_path = out_dir / f"{img_stem}.png"
+        img_final_path = out_dir / f"{img_stem}.{img_suffix}"
         save_array_to_img(image, img_final_path)
         return
 
@@ -89,11 +95,11 @@ def remove_objects_from_image(maskformer: MaskFormer, lama: LaMa, input_path: st
     for mask, label in zip(masks, labels):
         if args.save_masks:
             # Save the mask
-            mask_path = out_dir / f"mask_{label}.png"
+            mask_path = out_dir / f"mask_{label}{img_suffix}"
             save_array_to_img(mask, mask_path)
 
             # Save the masked image
-            img_mask_path = out_dir / f"with_mask_{label}.png"
+            img_mask_path = out_dir / f"with_mask_{label}{img_suffix}"
             save_masked_image(image, mask, img_mask_path)
 
         # Inpaint mask and save image
@@ -101,7 +107,7 @@ def remove_objects_from_image(maskformer: MaskFormer, lama: LaMa, input_path: st
         image = img_inpainted
 
     # Save final result
-    img_final_path = out_dir / f"{img_stem}.png"
+    img_final_path = out_dir / f"{img_stem}{img_suffix}"
     save_array_to_img(image, img_final_path)
 
 
@@ -123,6 +129,6 @@ if __name__ == "__main__":
         if len(images) == 0:
             raise IOError(f"There are no files in {args.input}.")
         for image in tqdm(images):
-            remove_objects_from_image(maskformer, lama, image, args.output_dir, args.dilate_kernel_size)
+            remove_objects_from_image(maskformer, lama, image, args.output_dir, args.img_suffix, args.dilate_kernel_size)
     else:
-        remove_objects_from_image(maskformer, lama, args.input, args.output_dir, args.dilate_kernel_size)
+        remove_objects_from_image(maskformer, lama, args.input, args.output_dir, args.img_suffix, args.dilate_kernel_size)
