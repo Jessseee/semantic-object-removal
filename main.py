@@ -18,12 +18,12 @@ from utils import load_img_to_array, save_array_to_img, dilate_mask, show_mask
 
 def setup_args(parser):
     parser.add_argument(
-        "input",  type=str, default=None,
-        help="Path to a single input image",
+        "input",  type=str, default=None, nargs='+',
+        help="Path to input image(s).",
     )
     parser.add_argument(
         "-l", "--labels", type=str, required=True, nargs='+',
-        help="The labels of objects to remove",
+        help="The labels of objects to remove.",
     )
     parser.add_argument(
         "-o", "--output_dir", type=str, default="./results",
@@ -83,7 +83,7 @@ def remove_objects_from_image(maskformer: MaskFormer, lama: LaMa, input_path: st
 
     # Save original image if no objects were found to remove
     if masks is None and labels is None:
-        img_final_path = output_dir / f"{img_stem}.{img_suffix}"
+        img_final_path = output_dir / f"{img_stem}{img_suffix}"
         save_array_to_img(image, img_final_path)
         return
 
@@ -124,15 +124,16 @@ if __name__ == "__main__":
     if output_dir.exists() and output_dir.is_file(): raise IOError(f"output directory {output_dir} is a file.")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    if not os.path.exists(args.input):
-        raise IOError(f"{args.input} does not exist.")
-    if os.path.isdir(args.input):
-        processed = [os.path.splitext(entry.name)[0] for entry in os.scandir(output_dir) if entry.is_file()]
-        images = [entry.path for entry in os.scandir(args.input) if entry.is_file()
-                  and os.path.splitext(entry.name)[0] not in processed]
-        if len(images) == 0:
-            raise IOError(f"There are no files in {args.input}.")
-        for image in tqdm(images):
-            remove_objects_from_image(maskformer, lama, image, output_dir, args.img_suffix, args.dilate_kernel_size)
-    else:
-        remove_objects_from_image(maskformer, lama, args.input, output_dir, args.img_suffix, args.dilate_kernel_size)
+    for path in args.input:
+        if not os.path.exists(path):
+            raise IOError(f"{path} does not exist.")
+        if os.path.isdir(path):
+            processed = [os.path.splitext(entry.name)[0] for entry in os.scandir(output_dir) if entry.is_file()]
+            images = [entry.path for entry in os.scandir(path) if entry.is_file()
+                      and os.path.splitext(entry.name)[0] not in processed]
+            if len(images) == 0:
+                raise IOError(f"There are no files in {path}.")
+            for image in tqdm(images):
+                remove_objects_from_image(maskformer, lama, image, output_dir, args.img_suffix, args.dilate_kernel_size)
+        else:
+            remove_objects_from_image(maskformer, lama, path, output_dir, args.img_suffix, args.dilate_kernel_size)
