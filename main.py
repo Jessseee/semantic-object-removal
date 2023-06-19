@@ -76,14 +76,14 @@ def remove_objects_from_image(maskformer: MaskFormer, lama: LaMa, input_path: st
     image = load_img_to_array(input_path)
     masks, labels = maskformer.segment(image, args.labels)
 
-    out_dir = Path(output_dir)
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
     img_stem = Path(input_path).stem
-    if args.save_masks: out_dir = out_dir / img_stem
-    out_dir.mkdir(parents=True, exist_ok=True)
+    if args.save_masks: output_dir = output_dir / img_stem
 
     # Save original image if no objects were found to remove
     if masks is None and labels is None:
-        img_final_path = out_dir / f"{img_stem}.{img_suffix}"
+        img_final_path = output_dir / f"{img_stem}.{img_suffix}"
         save_array_to_img(image, img_final_path)
         return
 
@@ -95,11 +95,11 @@ def remove_objects_from_image(maskformer: MaskFormer, lama: LaMa, input_path: st
     for mask, label in zip(masks, labels):
         if args.save_masks:
             # Save the mask
-            mask_path = out_dir / f"mask_{label}{img_suffix}"
+            mask_path = output_dir / f"mask_{label}{img_suffix}"
             save_array_to_img(mask, mask_path)
 
             # Save the masked image
-            img_mask_path = out_dir / f"with_mask_{label}{img_suffix}"
+            img_mask_path = output_dir / f"with_mask_{label}{img_suffix}"
             save_masked_image(image, mask, img_mask_path)
 
         # Inpaint mask and save image
@@ -107,7 +107,7 @@ def remove_objects_from_image(maskformer: MaskFormer, lama: LaMa, input_path: st
         image = img_inpainted
 
     # Save final result
-    img_final_path = out_dir / f"{img_stem}{img_suffix}"
+    img_final_path = output_dir / f"{img_stem}{img_suffix}"
     save_array_to_img(image, img_final_path)
 
 
@@ -120,15 +120,19 @@ if __name__ == "__main__":
     maskformer = MaskFormer(args.maskformer_ckpt, args.label_file)
     lama = LaMa(args.lama_ckpt, args.lama_config)
 
+    output_dir = Path(args.output_dir)
+    if output_dir.exists() and output_dir.is_file(): raise IOError(f"output directory {output_dir} is a file.")
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     if not os.path.exists(args.input):
         raise IOError(f"{args.input} does not exist.")
     if os.path.isdir(args.input):
-        processed = [os.path.splitext(file)[0] for file in os.listdir(args.output_dir)]
+        processed = [os.path.splitext(entry.name)[0] for entry in os.scandir(output_dir) if entry.is_file()]
         images = [entry.path for entry in os.scandir(args.input) if entry.is_file()
                   and os.path.splitext(entry.name)[0] not in processed]
         if len(images) == 0:
             raise IOError(f"There are no files in {args.input}.")
         for image in tqdm(images):
-            remove_objects_from_image(maskformer, lama, image, args.output_dir, args.img_suffix, args.dilate_kernel_size)
+            remove_objects_from_image(maskformer, lama, image, output_dir, args.img_suffix, args.dilate_kernel_size)
     else:
-        remove_objects_from_image(maskformer, lama, args.input, args.output_dir, args.img_suffix, args.dilate_kernel_size)
+        remove_objects_from_image(maskformer, lama, args.input, output_dir, args.img_suffix, args.dilate_kernel_size)
