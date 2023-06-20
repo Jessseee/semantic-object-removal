@@ -12,13 +12,11 @@ Be sure to download the model weights for [LaMa](https://github.com/advimman/lam
 To use the script you can call it with various options. The first positional argument is the input path, which can point to either an image or a directory of images. To remove objects from a picture add them to the labels option when running the script. The default labels can be found in `./semremover/models/config/ade20k_labels.json`.
 
 ## Example
-**input**
+### input
 ```
     python -m semremover example/paris.jpg --labels car minibike van
 ```
+![A picture of a street lined with cars in Paris.](https://github.com/Jessseee/semantic-object-removal/blob/main/example/paris.jpg?raw=true)
 
-![A picture of a street lined with cars in Paris.](example/paris.jpg)
-
-**output**
-
-![A picture of the same street in paris with the cars digitally removed.](example/paris-inpainted.jpg)
+### Output
+![A picture of the same street in paris with the cars digitally removed.](https://github.com/Jessseee/semantic-object-removal/blob/main/example/paris-inpainted.jpg?raw=true)
