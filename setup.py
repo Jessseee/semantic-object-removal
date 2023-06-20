@@ -1,8 +1,6 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="semremover",
-    version="{{VERSION}}",
     packages=find_packages(),
     package_data={'semremover': ["models/*/*.json, models/*/*.yaml"]},
     install_required=[

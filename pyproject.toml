@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "semremover"
-version = "0.0.1"
+version = "{{VERSION}}"
 authors = [
   { name="Jesse Visser", email="jssvssr2000@gmail.com" },
 ]
