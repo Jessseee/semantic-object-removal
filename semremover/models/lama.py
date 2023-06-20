@@ -22,14 +22,14 @@ class LaMa:
     @staticmethod
     def load_config(ckpt, config):
         predict_config = OmegaConf.load(config)
-        predict_config.model.path = ckpt
+        predict_config.model.input_path = ckpt
         device = torch.device("cuda")
-        train_config_path = os.path.join(predict_config.model.path, 'config.yaml')
+        train_config_path = os.path.join(predict_config.model.input_path, 'config.yaml')
         with open(train_config_path, 'r') as f:
             train_config = OmegaConf.create(yaml.safe_load(f))
         train_config.training_model.predict_only = True
         train_config.visualizer.kind = 'noop'
-        checkpoint_path = os.path.join(predict_config.model.path, 'models', predict_config.model.checkpoint)
+        checkpoint_path = os.path.join(predict_config.model.input_path, 'models', predict_config.model.checkpoint)
         model = load_checkpoint(train_config, checkpoint_path, strict=False, map_location='cpu')
         model.freeze()
         if not predict_config.get('refine', False):
