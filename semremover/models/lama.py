@@ -1,8 +1,15 @@
 import os
-import numpy as np
-import torch
+from io import BytesIO
+from urllib.request import urlopen
+from zipfile import ZipFile
+import logging
+
 import yaml
+import torch
+import numpy as np
 from omegaconf import OmegaConf
+
+log = logging.getLogger(__name__)
 
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
@@ -14,13 +21,34 @@ from saicinpainting.evaluation.utils import move_to_device
 from saicinpainting.training.trainers import load_checkpoint
 from saicinpainting.evaluation.data import pad_tensor_to_modulo
 
+from .utils import package_path
+
 
 class LaMa:
     def __init__(self, ckpt, config):
-        self.model, self.config, self.device = self.load_config(ckpt, config)
+        if not os.path.exists(ckpt):
+            log.warning(f"Could not find LaMa checkpoint at specified path.")
+            ckpt = self.__download_lama_weights()
+        self.model, self.config, self.device = self.__load_config(ckpt, config)
 
     @staticmethod
-    def load_config(ckpt, config):
+    def __download_lama_weights():
+        ckpt_dir = package_path("models/weights/big-lama")
+        ckpt_file = os.path.join(ckpt_dir, "models", "best.ckpt")
+        config_file = os.path.join(ckpt_dir, "config.yaml")
+        if os.path.exists(ckpt_file) and os.path.exists(config_file):
+            log.info("Using default Big-LaMa weights.")
+            return ckpt_dir
+        os.makedirs(ckpt_dir, exist_ok=True)
+        log.info("Downloading Big-LaMa model weights, this might take a minute...")
+        url = "https://github.com/Jessseee/lama/releases/latest/download/big-lama.zip"
+        with urlopen(url) as zip_repr:
+            with ZipFile(BytesIO(zip_repr.read())) as zip_file:
+                zip_file.extractall(ckpt_dir)
+        return ckpt_dir
+
+    @staticmethod
+    def __load_config(ckpt, config):
         predict_config = OmegaConf.load(config)
         predict_config.model.input_path = ckpt
         device = torch.device("cuda")
@@ -36,7 +64,7 @@ class LaMa:
             model.to(device)
         return model, predict_config, device
 
-    def create_batch(self, image: np.ndarray, mask: np.ndarray):
+    def __create_batch(self, image: np.ndarray, mask: np.ndarray):
         batch = dict()
         batch['image'] = image.permute(2, 0, 1).unsqueeze(0)
         batch['mask'] = mask[None, None]
@@ -54,7 +82,7 @@ class LaMa:
         image = torch.from_numpy(image).float().div(255.)
         mask = torch.from_numpy(mask).float()
 
-        batch = self.create_batch(image, mask)
+        batch = self.__create_batch(image, mask)
         unpad_to_size = [batch['image'].shape[2], batch['image'].shape[3]]
 
         batch = self.model(batch)

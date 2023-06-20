@@ -8,18 +8,7 @@ from tqdm import tqdm
 from argparse import ArgumentParser
 
 from .models import SemanticObjectRemover
-
-
-def package_path(path: str | os.PathLike):
-    package_directory = os.path.dirname(os.path.abspath(__file__))
-    new_path = os.path.join(package_directory, path)
-    return new_path if os.path.exists(new_path) else path
-
-
-def save_image(image: Image, image_path: str | os.PathLike, output_dir: str | os.PathLike, output_type: str):
-    img_stem = Path(image_path).stem
-    output_path = os.path.join(output_dir, f"{img_stem}{output_type}")
-    image.save(output_path)
+from .models.utils import package_path, save_image
 
 
 def create_parser():
@@ -50,7 +39,7 @@ def create_parser():
         help="The json file containing the output labels of the maskformer model"
     )
     parser.add_argument(
-        "--lama_ckpt", type=str, default=package_path("models/weights/big-lama"),
+        "--lama_ckpt", type=str, default=package_path("../models/weights/big-lama"),
         help="The path to the lama checkpoint.",
     )
     parser.add_argument(
