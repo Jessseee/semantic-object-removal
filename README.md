@@ -9,6 +9,8 @@ python -m pip install semremover
 
 Use the `SemanticObjectRemover` in your code.
 ``` python
+from semremover import SemanticObjectRemover
+
 sem_obj_remover = SemanticObjectRemover()
 labels = ['car', 'minibike', 'van']
 inpainted_image = sem_obj_remover.remove_objects_from_image("example.jpg", labels)
