@@ -39,7 +39,7 @@ def create_parser():
         help="The json file containing the output labels of the maskformer model"
     )
     parser.add_argument(
-        "--lama_ckpt", type=str, default=package_path("../models/weights/big-lama"),
+        "--lama_ckpt", type=str, default=package_path("models/weights/big-lama"),
         help="The path to the lama checkpoint.",
     )
     parser.add_argument(
@@ -81,8 +81,8 @@ for input_path in args.input:
             continue
         for image_path in tqdm(image_paths):
             inpainted_image = sem_obj_remover.remove_objects_from_image(image_path, args.labels, args.dilate_kernel_size)
-            save_image(inpainted_image, image_path, args.output_dir, args.output_type)
+            save_image(inpainted_image, args.output_dir, args.output_type)
     else:
         print(input_path)
         inpainted_image = sem_obj_remover.remove_objects_from_image(input_path, args.labels, args.dilate_kernel_size)
-        save_image(inpainted_image, input_path, args.output_dir, args.output_type)
+        save_image(inpainted_image, args.output_dir, args.output_type)

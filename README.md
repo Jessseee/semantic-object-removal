@@ -30,7 +30,7 @@ To use the script you can call it with various options. The first positional arg
 ### Example
 **input**
 ```
-    python -m semremover example/paris.jpg --labels car minibike van
+python -m semremover example/paris.jpg --labels car minibike van
 ```
 
 ![A picture of a street lined with cars in Paris.](https://github.com/Jessseee/semantic-object-removal/blob/main/example/paris.jpg?raw=true)

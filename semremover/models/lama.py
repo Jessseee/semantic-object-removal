@@ -7,7 +7,7 @@ import logging
 import yaml
 import torch
 import numpy as np
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, DictConfig
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class LaMa:
         self.model, self.config, self.device = self.__load_config(ckpt, config)
 
     @staticmethod
-    def __download_lama_weights():
+    def __download_lama_weights() -> str:
         ckpt_dir = package_path("models/weights/big-lama")
         ckpt_file = os.path.join(ckpt_dir, "models", "best.ckpt")
         config_file = os.path.join(ckpt_dir, "config.yaml")
@@ -48,7 +48,7 @@ class LaMa:
         return ckpt_dir
 
     @staticmethod
-    def __load_config(ckpt, config):
+    def __load_config(ckpt, config) -> tuple[torch.nn.Module, DictConfig, torch.device]:
         predict_config = OmegaConf.load(config)
         predict_config.model.input_path = ckpt
         device = torch.device("cuda")

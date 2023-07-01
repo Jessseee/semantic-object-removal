@@ -21,8 +21,10 @@ class SemanticObjectRemover:
         return np.array(img)
 
     @staticmethod
-    def __array_to_image(img_array: np.ndarray) -> Image:
-        return Image.fromarray(img_array.astype(np.uint8))
+    def __array_to_image(img_array: np.ndarray, input_path: str | os.PathLike) -> Image:
+        image = Image.fromarray(img_array.astype(np.uint8))
+        image.filename = os.path.split(input_path)[-1]
+        return image
 
     @staticmethod
     def __dilate_mask(mask: np.ndarray, dilate_factor: int = 15) -> np.ndarray:
@@ -31,7 +33,13 @@ class SemanticObjectRemover:
         return mask
 
     def remove_objects_from_image(self, input_path: str | os.PathLike, labels: list[str], dilate_kernel_size: int = 15) -> Image:
-        """ Remove objects specified by labels from input image. """
+        """
+        Remove objects specified by labels from input image.
+        :param input_path: path to input image.
+        :param labels: labels of objects to remove.
+        :param dilate_kernel_size: the amount of pixels to dilate the mask.
+        :return: Image with objects removed.
+        """
         if not os.path.exists(input_path) or os.path.isdir(input_path):
             raise IOError(f"{input_path} is not a file.")
 
@@ -43,7 +51,7 @@ class SemanticObjectRemover:
 
         # Save original image if no objects were found to remove
         if masks is None and labels is None:
-            return self.__array_to_image(image)
+            return self.__array_to_image(image, input_path)
 
         # Dilate mask to avoid unmasked edge effect
         if dilate_kernel_size > 0:
@@ -54,4 +62,4 @@ class SemanticObjectRemover:
             image = self.lama.inpaint(image, mask)
 
         # return final result
-        return self.__array_to_image(image)
+        return self.__array_to_image(image, input_path)
